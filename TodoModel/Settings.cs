@@ -7,11 +7,13 @@ using Newtonsoft.Json;
 namespace TodoModel {
 
     public class Settings {
-        public string SaveDirectory { get; set; }
+        public string DataBaseDirectory { get; set; }
         public string FileName { get; set; }
+        public string ChoosedBase { get; set; } = "default";
+
 
         public Settings() {
-            this.SaveDirectory = GetDefaultSaveDirectory();
+            this.DataBaseDirectory = GetDefaultSaveDirectory();
             this.FileName = GetFileName();
         }
 

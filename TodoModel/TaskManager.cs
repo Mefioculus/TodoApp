@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,13 +7,25 @@ using System.Collections.Generic;
 namespace TodoModel {
 
     public class Manager : IEnumerable, IEnumerable<Task> {
-        private Dictionary<Guid, Task> TasksDict { get; set; } = new Dictionary<Guid, Task>();
-        private List<Task> RootTasks { get; set; } = new List<Task>();
+        private Dictionary<Guid, Task> TasksDict { get; set; }
+        private List<Task> RootTasks { get; set; }
+
+        // Работа с тастроками
+        private SettingsManager SettingsManager { get; set; }
+        public Settings Settings => this.SettingsManager.Settings;
+
+        // Работа с базой данных
+        private DataBaseManager DataBaseManager { get; set; }
+
+        public DataBase ChoosedBase => this.DataBaseManager[this.SettingsManager.Settings.ChoosedBase];
+        public Dictionary<string, FileInfo> AvailableBases { get; private set; }
         
-        public Settings Settings { get; private set; }
 
         public Manager() {
-            //this.Settings = ReadSettings();
+
+            this.SettingsManager = new SettingsManager(); // Производим загрузку настроек
+            this.DataBaseManager = new DataBaseManager(this.Settings.DataBaseDirectory); // Производим загрузку базы данных
+
         }
 
         IEnumerator IEnumerable.GetEnumerator() {
@@ -25,21 +38,36 @@ namespace TodoModel {
                     yield return task;
                 }
             }
-
         }
 
-        public void ReadFromFile() {
+        public Task this[Guid key] {
+            get {
+                return this.TasksDict[key];
+            }
+            set {
+                this.TasksDict[key] = value;
+            }
         }
 
-        public void ReadFromFile(FileInfo file) {
-            // TODO: Реализовать чтение данных из файла
+        public void ReadFromBase() {
+            ReadFromBase(this.ChoosedBase);
         }
 
-        public void SaveToFile() {
+        public void ReadFromBase(DataBase db) {
+            Task currentTask;
+            foreach (string jsonString in db.Read()) {
+                currentTask = new Task();
+                currentTask.ReadFromJsonString(jsonString);
+
+            }
         }
 
-        public void SaveToFile(FileInfo file) {
-            // TODO: Реализовать сохранение данных в файл
+        public void SaveToBase() {
+            SaveToBase(this.ChoosedBase);
+        }
+
+        public void SaveToBase(DataBase db) {
+            db.Write(this.Select(task => task.WriteToJsonString()));
         }
 
         public override string ToString() {
